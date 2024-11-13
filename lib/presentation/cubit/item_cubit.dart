@@ -45,6 +45,33 @@ class ItemError extends ItemState {
   List<Object> get props => [message];
 }
 
+class ItemCreateSuccess extends ItemState {
+  final Item createdItem;
+
+  const ItemCreateSuccess(this.createdItem);
+
+  @override
+  List<Object> get props => [createdItem];
+}
+
+class ItemUpdateSuccess extends ItemState {
+  final Item updatedItem;
+
+  const ItemUpdateSuccess(this.updatedItem);
+
+  @override
+  List<Object> get props => [updatedItem];
+}
+
+class ItemDeleteSuccess extends ItemState {
+  final String message;
+
+  const ItemDeleteSuccess(this.message);
+
+  @override
+  List<Object> get props => [message];
+}
+
 class ItemCubit extends Cubit<ItemState> {
   final GetListOfItems getListOfItems;
   final GetSingleItem getSingleItem;
@@ -61,14 +88,16 @@ class ItemCubit extends Cubit<ItemState> {
   ) : super(ItemLoading());
 
   final Uuid uuid = const Uuid();
+  final List<Item> userCreatedItems = []; // To track user-created items
 
   void fetchItems() async {
     try {
       emit(ItemLoading());
-      final items = await getListOfItems();
-      emit(ItemLoaded(items));
+      final publicItems = await getListOfItems();
+      final allItems = [...userCreatedItems, ...publicItems];
+      emit(ItemLoaded(allItems));
     } catch (e) {
-      emit(ItemError(e.toString()));
+      emit(ItemError("Failed to load items: ${e.toString()}"));
     }
   }
 
@@ -82,33 +111,45 @@ class ItemCubit extends Cubit<ItemState> {
     }
   }
 
-  void createNewItem(String name, Map<String, dynamic> data) async {
+  Future<void> createNewItem(String name, Map<String, dynamic> data) async {
     try {
       emit(ItemLoading());
-      final newItem = Item(id: uuid.v4(), name: name, data: data);
-      await createItem(newItem);
+      final newItem =
+          await createItem(Item(id: uuid.v4(), name: name, data: data));
+      userCreatedItems.add(newItem);
+      emit(ItemCreateSuccess(newItem));
       fetchItems();
     } catch (e) {
       emit(ItemError(e.toString()));
+      rethrow;
     }
   }
 
-  void updateExistingItem(
+  Future<void> updateExistingItem(
       String id, String name, Map<String, dynamic> data) async {
     try {
-      emit(ItemLoading());
-      final updatedItem = Item(id: id, name: name, data: data);
-      await updateItem(id, updatedItem);
+      emit(ItemLoading()); // Show loading spinner
+      final updatedItem =
+          await updateItem(id, Item(id: id, name: name, data: data));
+      final index = userCreatedItems.indexWhere((item) => item.id == id);
+      // To update entry in user created items
+      if (index != -1) {
+        userCreatedItems[index] = updatedItem;
+      }
+      emit(ItemUpdateSuccess(updatedItem));
       fetchItems();
     } catch (e) {
       emit(ItemError(e.toString()));
+      rethrow;
     }
   }
 
-  void deleteItemById(String id) async {
+  Future<void> deleteItemById(String id) async {
     try {
       emit(ItemLoading());
-      await deleteItem(id);
+      final responseMessage = await deleteItem(id);
+      userCreatedItems.removeWhere((item) => item.id == id);
+      emit(ItemDeleteSuccess(responseMessage));
       fetchItems();
     } catch (e) {
       emit(ItemError(e.toString()));

@@ -20,6 +20,7 @@ class CreateItem {
       id: createdItem.id,
       name: createdItem.name,
       data: createdItem.data,
+      createdAt: createdItem.createdAt,
     );
   }
 }

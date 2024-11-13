@@ -36,7 +36,12 @@ class ItemApiService {
     return ItemModel.fromJson(response.data);
   }
 
-  Future<void> deleteItem(String id) async {
-    await _dio.delete('$_baseUrl/objects/$id');
+  Future<String> deleteItem(String id) async {
+    final response = await _dio.delete('$_baseUrl/objects/$id');
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return response.data['message']; // Return the success message
+    } else {
+      throw Exception('Failed to delete the item');
+    }
   }
 }

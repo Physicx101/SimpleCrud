@@ -21,6 +21,7 @@ class UpdateItem {
       id: updatedItem.id,
       name: updatedItem.name,
       data: updatedItem.data,
+      updatedAt: updatedItem.updatedAt,
     );
   }
 }

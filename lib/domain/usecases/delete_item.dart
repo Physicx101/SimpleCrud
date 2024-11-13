@@ -5,7 +5,7 @@ class DeleteItem {
 
   DeleteItem(this.apiService);
 
-  Future<void> call(String id) {
+  Future<String> call(String id) {
     return apiService.deleteItem(id);
   }
 }
