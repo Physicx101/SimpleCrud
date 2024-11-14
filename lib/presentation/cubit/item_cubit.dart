@@ -101,13 +101,13 @@ class ItemCubit extends Cubit<ItemState> {
     }
   }
 
-  void fetchSingleItem(String id) async {
+  Future<Item> fetchSingleItem(String id) async {
     try {
-      emit(ItemLoading());
       final item = await getSingleItem(id);
-      emit(SingleItemLoaded(item));
+      return item;
     } catch (e) {
       emit(ItemError(e.toString()));
+      rethrow;
     }
   }
 

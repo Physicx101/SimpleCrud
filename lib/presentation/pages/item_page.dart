@@ -56,6 +56,14 @@ class _ItemPageState extends State<ItemPage> {
                       context.read<ItemCubit>().userCreatedItems.contains(item);
 
                   return ListTile(
+                    onTap: () async {
+                      final currentItem = await context
+                          .read<ItemCubit>()
+                          .fetchSingleItem(item.id);
+                      if (context.mounted) {
+                        await showDetailDialog(context, currentItem);
+                      }
+                    },
                     title: Text(item.name),
                     subtitle: _buildItemDetails(item),
                     trailing: isUserCreated
@@ -305,6 +313,24 @@ class _ItemPageState extends State<ItemPage> {
             if (item.updatedAt != null) Text('Updated At: ${item.updatedAt}'),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> showDetailDialog(BuildContext context, Item item) async {
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(item.name),
+        content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [_buildItemDetails(item)]),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
